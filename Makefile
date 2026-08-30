@@ -1,0 +1,45 @@
+PYTHON := .venv/bin/python
+PIP    := .venv/bin/pip
+
+.PHONY: setup install install-dev data lint format test test-cov run run-prod sample clean
+
+setup:
+	python -m venv .venv
+	$(PIP) install --upgrade pip
+
+install:
+	$(PIP) install -r requirements.txt
+	$(PIP) install -e .
+
+install-dev:
+	$(PIP) install -r requirements-dev.txt
+	$(PIP) install -e .
+
+data:
+	$(PYTHON) scripts/build_datasets.py
+
+lint:
+	.venv/bin/ruff check src/ tests/ scripts/
+
+format:
+	.venv/bin/ruff format src/ tests/ scripts/
+
+test:
+	$(PYTHON) -m pytest tests/
+
+test-cov:
+	$(PYTHON) -m pytest --cov=src/churn_predictor --cov-report=term-missing tests/
+
+run:
+	$(PYTHON) -m uvicorn churn_predictor.api.app:app --host 0.0.0.0 --port 8000 --reload --app-dir src
+
+run-prod:
+	$(PYTHON) -m uvicorn churn_predictor.api.app:app --host 0.0.0.0 --port 8000 --workers 2 --app-dir src
+
+sample:
+	$(PYTHON) scripts/generate_test_cases.py --n 5 --seed 42
+
+clean:
+	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+	find . -name "*.pyc" -delete 2>/dev/null || true
+	rm -rf .pytest_cache .coverage htmlcov
