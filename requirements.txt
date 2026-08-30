@@ -1,0 +1,10 @@
+fastapi==0.115.14
+uvicorn[standard]==0.35.0
+pydantic==2.13.0
+pydantic-settings==2.10.1
+scikit-learn==1.9.0
+imbalanced-learn==0.14.2
+joblib==1.5.1
+pandas==2.3.1
+openpyxl==3.1.5
+structlog==25.4.0
