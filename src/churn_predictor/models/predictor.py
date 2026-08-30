@@ -66,11 +66,11 @@ class ChurnPredictor:
 
         contributors = self._explainer.explain(df)
 
-        top_feat = contributors[0].feature if contributors else "n/a"
+        top_label = contributors[0].feature_label if contributors else "n/a"
         if label:
-            decision = f"Alta probabilidade de churn ({prob:.1%}). Principal fator: {top_feat}."
+            decision = f"Alta probabilidade de churn ({prob:.1%}). Principal fator: {top_label}."
         else:
-            decision = f"Baixa probabilidade de churn ({prob:.1%}). Cliente provavelmente retido."
+            decision = f"Baixa probabilidade de churn ({prob:.1%}). Principal fator de retenção: {top_label}."
 
         return PredictionResponse(
             customer_id=profile.customer_id,

@@ -1,6 +1,6 @@
-from __future__ import annotations
+from typing import Annotated
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from churn_predictor.domain.enums import (
     ContractType,
@@ -10,41 +10,64 @@ from churn_predictor.domain.enums import (
     YesNo,
 )
 
+_FIELD_ALIASES: dict[str, str] = {
+    "tenure_months": "Tenure Months",
+    "monthly_charges": "Monthly Charges",
+    "total_charges": "Total Charges",
+    "senior_citizen": "Senior Citizen",
+    "partner": "Partner",
+    "dependents": "Dependents",
+    "multiple_lines": "Multiple Lines",
+    "internet_service": "Internet Service",
+    "online_security": "Online Security",
+    "online_backup": "Online Backup",
+    "device_protection": "Device Protection",
+    "tech_support": "Tech Support",
+    "streaming_tv": "Streaming TV",
+    "streaming_movies": "Streaming Movies",
+    "contract": "Contract",
+    "paperless_billing": "Paperless Billing",
+    "payment_method": "Payment Method",
+}
+
 
 class CustomerProfile(BaseModel):
     """Raw customer profile after basic cleaning (trusted schema)."""
 
+    model_config = ConfigDict(
+        populate_by_name=True,
+        alias_generator=lambda field_name: _FIELD_ALIASES.get(field_name, field_name),
+    )
+
     customer_id: str | None = None
 
     # Numerics
-    tenure_months: int = Field(..., ge=0, alias="Tenure Months")
-    monthly_charges: float = Field(..., gt=0, alias="Monthly Charges")
-    total_charges: float = Field(..., ge=0, alias="Total Charges")
+    tenure_months: Annotated[int, Field(ge=0)]
+    monthly_charges: Annotated[float, Field(gt=0)]
+    total_charges: Annotated[float, Field(ge=0)]
 
     # Demographics
-    senior_citizen: SeniorCitizen = Field(..., alias="Senior Citizen")
-    partner: YesNo = Field(..., alias="Partner")
-    dependents: YesNo = Field(..., alias="Dependents")
+    senior_citizen: SeniorCitizen
+    partner: YesNo
+    dependents: YesNo
 
     # Services
-    multiple_lines: YesNo = Field(..., alias="Multiple Lines")
-    internet_service: InternetService = Field(..., alias="Internet Service")
-    online_security: YesNo = Field(..., alias="Online Security")
-    online_backup: YesNo = Field(..., alias="Online Backup")
-    device_protection: YesNo = Field(..., alias="Device Protection")
-    tech_support: YesNo = Field(..., alias="Tech Support")
-    streaming_tv: YesNo = Field(..., alias="Streaming TV")
-    streaming_movies: YesNo = Field(..., alias="Streaming Movies")
+    multiple_lines: YesNo
+    internet_service: InternetService
+    online_security: YesNo
+    online_backup: YesNo
+    device_protection: YesNo
+    tech_support: YesNo
+    streaming_tv: YesNo
+    streaming_movies: YesNo
 
     # Billing
-    contract: ContractType = Field(..., alias="Contract")
-    paperless_billing: YesNo = Field(..., alias="Paperless Billing")
-    payment_method: PaymentMethod = Field(..., alias="Payment Method")
-
-    model_config = {"populate_by_name": True}
+    contract: ContractType
+    paperless_billing: YesNo
+    payment_method: PaymentMethod
 
     @model_validator(mode="after")
-    def check_total_charges_consistency(self) -> CustomerProfile:
+    def check_total_charges_consistency(self) -> "CustomerProfile":
         if self.tenure_months == 0 and self.total_charges != 0:
             raise ValueError("Total Charges must be 0 when Tenure Months is 0")
         return self
@@ -52,8 +75,9 @@ class CustomerProfile(BaseModel):
 
 class Contributor(BaseModel):
     feature: str
-    value: float
+    feature_label: str
     contribution: float
+    direction: str
 
 
 class PredictionResponse(BaseModel):

@@ -123,22 +123,27 @@
         const r = await resp.json();
         const cls = r.churn_prediction ? 'churn-yes' : 'churn-no';
         const label = r.churn_prediction ? '⚠️ Churn' : '✅ Retido';
-        const rows = r.top_contributors.map(c =>
-          `<tr><td>${c.feature}</td><td>${c.value.toFixed(3)}</td><td>${c.contribution.toFixed(4)}</td></tr>`
-        ).join('');
+        const rows = r.top_contributors.map(c => {
+          const impact = c.contribution > 0 ? '▲' : '▼';
+          const color  = c.contribution > 0 ? '#c0392b' : '#27ae60';
+          return `<tr>
+            <td>${c.feature_label}</td>
+            <td style="color:${color};font-weight:600">${impact} ${c.direction}</td>
+            <td style="text-align:right;font-variant-numeric:tabular-nums">${c.contribution.toFixed(3)}</td>
+          </tr>`;
+        }).join('');
         resultDiv.innerHTML = `
           <div class="card">
             <div class="prob ${cls}">${(r.churn_probability * 100).toFixed(1)}% — ${label}</div>
             <p style="margin-top:.5rem;color:#666">${r.decision_reason}</p>
-            <p style="margin-top:.3rem;font-size:.8rem;color:#999">Threshold: ${r.threshold} | Model: ${r.model_version}</p>
+            <p style="margin-top:.3rem;font-size:.8rem;color:#999">Threshold: ${r.threshold} | Modelo: ${r.model_version}</p>
             <div class="contributors">
-              <strong>Top contributors</strong>
+              <strong>Principais fatores</strong>
               <table>
-                <thead><tr><th>Feature</th><th>Value</th><th>Contribution</th></tr></thead>
+                <thead><tr><th>Fator</th><th>Impacto</th><th style="text-align:right">Peso</th></tr></thead>
                 <tbody>${rows}</tbody>
               </table>
             </div>
-            <pre>${JSON.stringify(r, null, 2)}</pre>
           </div>`;
       } catch(err) {
         resultDiv.innerHTML = `<div class="error">${err}</div>`;
