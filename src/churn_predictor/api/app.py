@@ -3,7 +3,6 @@ from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from prometheus_client import make_asgi_app
 
 from churn_predictor.api.dependencies import get_predictor
 from churn_predictor.api.middleware import RequestLoggingMiddleware
@@ -32,10 +31,6 @@ def create_app() -> FastAPI:
 
     app.include_router(health_router.router)
     app.include_router(predict_router.router)
-
-    if settings.prometheus_enabled:
-        metrics_app = make_asgi_app()
-        app.mount("/metrics", metrics_app)
 
     static_dir = Path("static")
     if static_dir.exists():

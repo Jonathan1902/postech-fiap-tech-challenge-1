@@ -8,7 +8,6 @@ class Settings(BaseSettings):
 
     model_path: Path = Path("models/champion_v2_logreg.joblib")
     log_level: str = "INFO"
-    prometheus_enabled: bool = False
 
     raw_data_path: Path = Path("data/raw/telco_customer_churn.xlsx")
     trusted_data_path: Path = Path("data/trusted/telco_churn_trusted.csv")

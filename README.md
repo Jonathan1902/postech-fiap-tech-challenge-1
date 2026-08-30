@@ -21,7 +21,7 @@ data/raw/          → data/trusted/ → data/refined/
 - **Track C** — ChurnPredictor + Explainer (contribuições LogReg)
 - **Track D** — API FastAPI + HTML
 - **Track E** — Tooling (Makefile, pyproject, requirements)
-- **Track F** — Observabilidade (structlog JSON, Prometheus)
+- **Track F** — Observabilidade (structlog JSON)
 
 ---
 
@@ -53,8 +53,6 @@ make run
 | POST | `/predict` | Prediz churn para um cliente |
 | POST | `/predict/batch` | Prediz em lote |
 | GET | `/` | Página HTML interativa |
-| GET | `/metrics` | Prometheus (se `PROMETHEUS_ENABLED=1`) |
-
 Veja `docs/api_contract.md` para exemplos completos.
 
 ---
@@ -75,7 +73,6 @@ Veja `docs/api_contract.md` para exemplos completos.
 ## Observabilidade
 
 - **Logs JSON** (structlog): cada requisição loga `request_id`, `latency_ms`, `input_hash` (SHA256 — nunca PII), `probability`, `top_contributor`.
-- **Prometheus** (`/metrics`): histograma de latência, contadores de predições/erros.
 
 ---
 
@@ -89,7 +86,7 @@ src/churn_predictor/
 ├── data/                DataPipeline (raw→trusted→refined)
 ├── models/              ChurnPredictor + Explainer
 ├── api/                 FastAPI app, routes, middleware
-└── observability/       structlog + prometheus
+└── observability/       structlog
 ```
 
 ---

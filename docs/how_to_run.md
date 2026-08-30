@@ -33,7 +33,6 @@ Copy `.env.example` to `.env` and adjust as needed:
 | `MODEL_PATH` | `models/champion_v2_logreg.joblib` | Path to champion model |
 | `THRESHOLD` | `0.6717` | Classification threshold |
 | `LOG_LEVEL` | `INFO` | Logging level |
-| `PROMETHEUS_ENABLED` | `0` | Enable `/metrics` endpoint |
 
 ## Generate test payloads
 
