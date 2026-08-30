@@ -4,6 +4,23 @@ API de predição de churn de clientes de telecomunicações, servida via **Fast
 
 ---
 
+## Estrutura do Repositório
+
+```
+├── data/                  raw, trusted, refined
+├── docs/                  documentação adicional
+├── models/                modelos treinados
+├── notebooks/             notebooks de EDA e modelagem
+├── scripts/               scripts auxiliares
+├── src/                   código-fonte do projeto
+│   └── churn_predictor/   módulo principal
+├── tests/                 testes unitários e de integração
+├── .env.example           exemplo de arquivo de variáveis de ambiente
+├── Makefile               comandos make para facilitar execução
+├── README.md              este arquivo
+└── requirements-dev.txt   dependências de desenvolvimento
+```
+
 ## Arquitetura
 
 ```
@@ -16,32 +33,76 @@ data/raw/          → data/trusted/ → data/refined/
                   static/index.html
 ```
 
-- **Track B** — Domain (enums, schemas Pydantic v2) + Feature Engineering
-- **Track A** — Data Pipeline (raw → trusted → refined)
-- **Track C** — ChurnPredictor + Explainer (contribuições LogReg)
-- **Track D** — API FastAPI + HTML
-- **Track E** — Tooling (Makefile, pyproject, requirements)
-- **Track F** — Observabilidade (structlog JSON)
+---
+
+## Pré-requisitos
+
+- Python 3.11+
+- `data/raw/telco_customer_churn.xlsx` (já incluso no repositório)
+- `make` instalado (opcional — os comandos equivalentes são listados abaixo)
 
 ---
 
-## Quickstart
+## Como rodar localmente
+
+### 1. Criar o ambiente virtual e instalar dependências
 
 ```bash
-# Setup
+# Com make
 make setup install-dev
 
-# Build datasets
+# Sem make
+python -m venv .venv
+.venv/bin/pip install --upgrade pip
+.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/pip install -e .
+```
+
+### 2. Construir os datasets
+
+```bash
+# Com make
 make data
 
-# Lint + tests
+# Sem make
+.venv/bin/python scripts/build_datasets.py
+```
+
+### 3. Lint e testes
+
+```bash
+# Com make
 make lint
 make test-cov
 
-# Start server
-make run
-# → http://localhost:8000
+# Sem make
+.venv/bin/ruff check src/ tests/ scripts/
+.venv/bin/python -m pytest --cov=src/churn_predictor --cov-report=term-missing tests/
 ```
+
+### 4. Iniciar o servidor
+
+```bash
+# Com make
+make run
+
+# Sem make
+.venv/bin/python -m uvicorn churn_predictor.api.app:app \
+  --host 0.0.0.0 --port 8000 --reload --app-dir src
+```
+
+Acesse: **http://localhost:8000**
+
+---
+
+## Variáveis de ambiente
+
+Crie um arquivo `.env` na raiz do projeto (opcional):
+
+| Variável | Padrão | Descrição |
+|---|---|---|
+| `MODEL_PATH` | `models/champion_v2_logreg.joblib` | Caminho para o modelo campeão |
+| `LOG_LEVEL` | `INFO` | Nível de log |
 
 ---
 
@@ -53,7 +114,8 @@ make run
 | POST | `/predict` | Prediz churn para um cliente |
 | POST | `/predict/batch` | Prediz em lote |
 | GET | `/` | Página HTML interativa |
-Veja `docs/api_contract.md` para exemplos completos.
+
+Veja `docs/api_contract.md` para schemas e exemplos completos.
 
 ---
 
@@ -72,7 +134,7 @@ Veja `docs/api_contract.md` para exemplos completos.
 
 ## Observabilidade
 
-- **Logs JSON** (structlog): cada requisição loga `request_id`, `latency_ms`, `input_hash` (SHA256 — nunca PII), `probability`, `top_contributor`.
+- **Logs JSON** (structlog): cada requisição loga `input_hash` (SHA256 — nunca PII), `latency`, `probability`, `top_contributor`, `model_version`.
 
 ---
 
@@ -91,8 +153,9 @@ src/churn_predictor/
 
 ---
 
-## Documentação
+## Troubleshooting
 
-- `docs/api_contract.md` — schemas, exemplos, enums
-- `docs/how_to_run.md` — setup, variáveis de ambiente
-- `docs/validation_report.md` — checklist executado com evidências
+- **`make: command not found`** — use os comandos equivalentes listados em cada etapa acima.
+- **Modelo não encontrado** — verifique se `models/champion_v2_logreg.joblib` existe.
+- **Erros 422** — confira os valores de enum em `docs/api_contract.md`.
+- **Erros de import** — execute o passo de instalação de dependências novamente.
