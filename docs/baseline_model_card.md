@@ -3,7 +3,8 @@
 **Projeto:** Tech Challenge 1 — Pipeline Preditivo de Churn  
 **Autor:** Jonathan Costa — FIAP Pós-Graduação em Machine Learning  
 **Data:** Agosto/2026  
-**Arquivo do modelo:** `models/baseline_logistic_regression.joblib`  
+**Arquivo do modelo:** `models/baseline_logistic_regression.joblib`
+**Revisão aplicada (v2):** ver [eda_and_model_revision.md](./eda_and_model_revision.md) — pipeline agora usa 17 features (removidos `Gender` e `Phone Service` por Cramér's V < 0,02), colapso de `"No internet service"`/`"No phone service"` → `"No"` (elimina 7 colunas OHE colineares) e imputação `Total Charges = 0` para clientes com `Tenure = 0`. Métricas mantiveram-se equivalentes (AUC 0,8487 · Recall 0,7834 · F1 0,6188), mas o modelo é mais parcimonioso e semanticamente correto.  
 
 ---
 
