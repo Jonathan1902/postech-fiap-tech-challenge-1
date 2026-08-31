@@ -16,6 +16,5 @@ def health(predictor: ChurnPredictor = Depends(get_predictor)) -> HealthResponse
         status="ok",
         model_version=predictor.model_version,
         threshold=predictor.threshold,
-        feature_contract_hash=predictor.feature_contract_hash,
         uptime_s=round(time.time() - _start_time, 1),
     )
