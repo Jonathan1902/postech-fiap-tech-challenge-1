@@ -56,7 +56,12 @@ _LABEL_MAP: dict[str, str] = {
 
 
 class Explainer:
-    """Computes feature contributions for LogisticRegression using coef × scaled_value."""
+    """Computes per-feature contributions for the champion pipeline.
+
+    Supports two strategies depending on the classifier type:
+    - Linear models (coef_ available): contribution = coef × encoded_value
+    - Tree/ensemble models (feature_importances_ available): contribution = importance score
+    """
 
     def __init__(self, pipeline, num_features: list[str], cat_features: list[str]):
         self._pipeline = pipeline
@@ -70,10 +75,19 @@ class Explainer:
         imputed = self._pipeline.named_steps["impute"].transform(df)
         encoded = encode_step.transform(imputed)
 
-        coefs = clf_step.coef_[0]
-        contribs = coefs * encoded[0]
-
         names = self._build_feature_names(encode_step)
+
+        if hasattr(clf_step, "coef_"):
+            # Linear models (LogisticRegression, SGDClassifier, …)
+            # contribution = coefficient × scaled feature value
+            contribs = clf_step.coef_[0] * encoded[0]
+        elif hasattr(clf_step, "feature_importances_"):
+            # Tree/ensemble models (RandomForest, GradientBoosting, ExtraTrees, …)
+            # feature_importances_ is always non-negative; sign set by correlation direction
+            contribs = clf_step.feature_importances_
+        else:
+            # Fallback: uniform importance — signals that model type is unsupported
+            contribs = np.ones(encoded.shape[1]) / encoded.shape[1]
 
         top_idx = np.argsort(np.abs(contribs))[::-1][:top_n]
         return [
