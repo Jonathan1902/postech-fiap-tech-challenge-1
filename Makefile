@@ -5,7 +5,7 @@ PIP    := .venv/bin/pip
 
 setup:
 	python -m venv .venv
-	$(PIP) install --upgrade pip
+	$(PIP) install --upgrade pip setuptools wheel
 
 install:
 	$(PIP) install -r requirements.txt
