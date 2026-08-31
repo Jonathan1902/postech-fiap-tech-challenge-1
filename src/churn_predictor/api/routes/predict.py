@@ -34,11 +34,3 @@ def predict(
     )
 
     return result
-
-
-@router.post("/predict/batch", response_model=list[PredictionResponse])
-def predict_batch(
-    profiles: list[CustomerProfile],
-    predictor: ChurnPredictor = Depends(get_predictor),
-) -> list[PredictionResponse]:
-    return predictor.predict_batch(profiles)

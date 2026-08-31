@@ -82,5 +82,3 @@ class ChurnPredictor:
             top_contributors=contributors,
         )
 
-    def predict_batch(self, profiles: list[CustomerProfile]) -> list[PredictionResponse]:
-        return [self.predict(p) for p in profiles]

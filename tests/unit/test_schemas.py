@@ -58,3 +58,8 @@ def test_total_charges_zero_when_tenure_zero_valid():
     p = CustomerProfile.model_validate(_valid_payload(**{"Tenure Months": 0, "Total Charges": 0.0}))
     assert p.tenure_months == 0
     assert p.total_charges == 0.0
+
+
+def test_internet_service_cable_accepted():
+    p = CustomerProfile.model_validate(_valid_payload(**{"Internet Service": "Cable"}))
+    assert p.internet_service.value == "Cable"

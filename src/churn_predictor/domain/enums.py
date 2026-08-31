@@ -14,6 +14,7 @@ class SeniorCitizen(StrEnum):
 class InternetService(StrEnum):
     dsl = "DSL"
     fiber_optic = "Fiber optic"
+    cable = "Cable"
     no = "No"
 
 

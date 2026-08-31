@@ -46,9 +46,3 @@ def test_regression_fixed_profile(predictor):
     assert prob > 0.5
 
 
-def test_predict_batch(predictor, generator):
-    profiles = generator.generate_batch(5)
-    results = predictor.predict_batch(profiles)
-    assert len(results) == 5
-    for r in results:
-        assert 0.0 <= r.churn_probability <= 1.0

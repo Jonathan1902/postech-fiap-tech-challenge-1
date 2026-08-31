@@ -29,6 +29,7 @@ _LABEL_MAP: dict[str, str] = {
     "Multiple Lines_No": "Linha telefônica única",
     "Internet Service_DSL": "Internet: DSL",
     "Internet Service_Fiber optic": "Internet: fibra óptica",
+    "Internet Service_Cable": "Internet: cabo",
     "Internet Service_No": "Sem serviço de internet",
     "Online Security_Yes": "Segurança online: ativa",
     "Online Security_No": "Segurança online: inativa",

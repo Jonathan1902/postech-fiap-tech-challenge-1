@@ -52,7 +52,3 @@ def test_predict_tenure_zero_nonzero_total_charges(client):
     assert resp.status_code == 422
 
 
-def test_predict_batch(client):
-    resp = client.post("/predict/batch", json=[VALID_PAYLOAD, VALID_PAYLOAD])
-    assert resp.status_code == 200
-    assert len(resp.json()) == 2
