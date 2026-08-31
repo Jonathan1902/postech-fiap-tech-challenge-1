@@ -22,11 +22,7 @@ class ChurnPredictor:
         self._num_features: list[str] = artifact["num_features"]
         self._cat_features: list[str] = artifact["cat_features"]
 
-        raw = model_path.read_bytes()
-        self._model_version = hashlib.sha256(raw).hexdigest()[:8]
-        self._feature_contract_hash = hashlib.sha256(
-            str(self._feature_cols).encode()
-        ).hexdigest()[:8]
+        self._model_version = hashlib.sha256(model_path.read_bytes()).hexdigest()[:8]
 
         self._engineer = FeatureEngineer()
         self._explainer = Explainer(self._pipeline, self._num_features, self._cat_features)
@@ -38,26 +34,6 @@ class ChurnPredictor:
     @property
     def model_version(self) -> str:
         return self._model_version
-
-    @property
-    def feature_cols(self) -> list[str]:
-        return self._feature_cols
-
-    @property
-    def feature_contract_hash(self) -> str:
-        return self._feature_contract_hash
-
-    def metadata(self) -> dict[str, Any]:
-        return {
-            "model_version": self._model_version,
-            "threshold": self._threshold,
-            "feature_cols": self._feature_cols,
-        }
-
-    def predict_proba(self, profile: CustomerProfile) -> float:
-        df = self._engineer.transform(profile)
-        proba = self._pipeline.predict_proba(df)[0, 1]
-        return float(proba)
 
     def predict(self, profile: CustomerProfile) -> PredictionResponse:
         df = self._engineer.transform(profile)
@@ -81,4 +57,3 @@ class ChurnPredictor:
             decision_reason=decision,
             top_contributors=contributors,
         )
-

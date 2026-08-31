@@ -6,11 +6,6 @@ class YesNo(StrEnum):
     no = "No"
 
 
-class SeniorCitizen(StrEnum):
-    yes = "Yes"
-    no = "No"
-
-
 class InternetService(StrEnum):
     dsl = "DSL"
     fiber_optic = "Fiber optic"

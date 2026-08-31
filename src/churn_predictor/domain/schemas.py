@@ -6,7 +6,6 @@ from churn_predictor.domain.enums import (
     ContractType,
     InternetService,
     PaymentMethod,
-    SeniorCitizen,
     YesNo,
 )
 
@@ -47,7 +46,7 @@ class CustomerProfile(BaseModel):
     total_charges: Annotated[float, Field(ge=0)]
 
     # Demographics
-    senior_citizen: SeniorCitizen
+    senior_citizen: YesNo
     partner: YesNo
     dependents: YesNo
 
@@ -94,5 +93,4 @@ class HealthResponse(BaseModel):
     status: str
     model_version: str
     threshold: float
-    feature_contract_hash: str
     uptime_s: float
