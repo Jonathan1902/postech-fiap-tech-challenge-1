@@ -22,7 +22,7 @@ A tarefa é classificação binária supervisionada: dado o perfil de um cliente
 |---|---|
 | Fonte | Telco Customer Churn (Kaggle/IBM) |
 | Total de registros | 7.043 |
-| Features de entrada | 19 (3 numéricas + 16 categóricas) |
+| Features de entrada | 18 (2 numéricas + 16 categóricas) |
 | Target | `Churn Value` (0 = Não Churn, 1 = Churn) |
 | Distribuição do target | 73,5% Não Churn / 26,5% Churn (desbalanceado) |
 | Split treino/teste | 80% / 20% estratificado por target |
@@ -38,8 +38,8 @@ O pré-processamento é encapsulado em um `ColumnTransformer` do scikit-learn, g
 ```
 Pipeline
 ├── preprocessor (ColumnTransformer)
-│   ├── num  → ['Tenure Months', 'Monthly Charges', 'Total Charges']
-│   │   ├── SimpleImputer(strategy='median')   # 11 NaNs em Total Charges
+│   ├── num  → ['Tenure Months', 'Monthly Charges']
+│   │   ├── SimpleImputer(strategy='median')
 │   │   └── StandardScaler()
 │   └── cat  → [16 features categóricas]
 │       ├── SimpleImputer(strategy='most_frequent')
@@ -48,6 +48,8 @@ Pipeline
     └── LogisticRegression(C=1.0, max_iter=1000, class_weight='balanced',
                            solver='lbfgs', random_state=42)
 ```
+
+> **Nota:** `Total Charges` é descartado pelo `FeatureEngineer` antes do treino e da inferência, por ser altamente colinear com `Tenure Months` (ρ = 0,826). O campo ainda é recebido no input da API para compatibilidade de schema, mas não alimenta o modelo.
 
 ### Colunas excluídas do treinamento
 

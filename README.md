@@ -2,7 +2,7 @@
 
 **Autor:** Jonathan Costa — FIAP Pós-Graduação em Machine Learning  
 **Data:** Agosto/2026  
-**Modelo campeão:** `LogisticRegression + SMOTE-NC` · AUC-ROC 0,84 · Precision 0,62 · threshold 0,672
+**Modelo campeão:** `LogisticRegression + SMOTE-NC` · AUC-ROC 0,84 · Recall 0,68 · threshold 0,5506
 
 ---
 
@@ -32,7 +32,7 @@ A Telco é uma operadora de telecomunicações enfrentando aceleração na taxa 
 │                                                                             │
 │  01_eda_telco_churn.ipynb          02_modeling_telco_churn.ipynb            │
 │  · Análise exploratória            · Baseline LogReg                        │
-│  · Correlações, distribuições      · 5 candidatos com SMOTE-NC              │
+│  · Correlações, distribuições      · 6 candidatos com SMOTE-NC              │
 │  · Identificação de leakage        · Tuning RandomizedSearchCV              │
 │  · Decisões de feature eng.        · Calibração de threshold (PR curve)     │
 │                                    · Benchmark de latência                  │
@@ -64,7 +64,7 @@ A Telco é uma operadora de telecomunicações enfrentando aceleração na taxa 
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  API REST  (FastAPI · uvicorn)                                              │
 │                                                                             │
-│  GET  /health      POST /predict      POST /predict/batch                   │
+│  GET  /health      POST /predict                                            │
 │  GET  /            (UI interativa HTML)                                     │
 │                                                                             │
 │  Logs JSON estruturados (structlog) · input_hash SHA-256 (sem PII)          │
@@ -125,7 +125,7 @@ postech-fiap-tech-challenge-1/
 | Notebook | Conteúdo |
 |---|---|
 | `01_eda_telco_churn.ipynb` | Análise exploratória: distribuições, correlações (Cramér's V, Pearson), identificação de leakage, decisões de feature engineering, análise de desbalanceamento |
-| `02_modeling_telco_churn.ipynb` | Baseline LogReg · comparação de 5 candidatos com pipeline equivalente (SMOTE-NC + CV) · tuning `RandomizedSearchCV` · calibração de threshold pela curva PR · benchmark de latência · seleção do campeão |
+| `02_modeling_telco_churn.ipynb` | Baseline LogReg · comparação de 6 candidatos (incluindo MLPClassifier) com pipeline equivalente (SMOTE-NC + CV) · tuning `RandomizedSearchCV` (com `smote__k_neighbors`) · diagnóstico e calibração de threshold pela curva PR · benchmark de latência · seleção do campeão |
 
 Para executar os notebooks, certifique-se de que os datasets refined existem (`make data`) e abra com Jupyter ou VS Code.
 
@@ -137,29 +137,30 @@ Para executar os notebooks, certifique-se de que os datasets refined existem (`m
 
 | Modelo | AUC-ROC | PR-AUC | F1 | Recall | Precision | ms/amostra |
 |---|---|---|---|---|---|---|
-| **LogReg L2** ★ | 0,852 | 0,666 | **0,643** | **0,751** | 0,563 | **0,009** |
-| GradientBoosting | **0,858** | **0,673** | 0,639 | 0,672 | 0,609 | 0,016 |
-| RandomForest | 0,844 | 0,622 | 0,615 | 0,627 | 0,604 | 0,039 |
-| HistGradBoost | 0,844 | 0,643 | 0,608 | 0,612 | 0,605 | 0,017 |
-| ExtraTrees | 0,832 | 0,603 | 0,600 | 0,623 | 0,580 | 0,050 |
+| **LogReg L2** ★ | **0,855** | **0,673** | **0,650** | 0,757 | 0,570 | **0,016** |
+| GradientBoosting | 0,854 | 0,671 | 0,635 | 0,666 | 0,607 | 0,020 |
+| MLP | 0,849 | 0,654 | 0,627 | 0,697 | 0,570 | 0,058 |
+| RandomForest | 0,845 | 0,635 | 0,616 | 0,629 | 0,603 | 0,133 |
+| ExtraTrees | 0,835 | 0,611 | 0,608 | 0,633 | 0,584 | 0,123 |
+| HistGradBoost | 0,843 | 0,646 | 0,606 | 0,606 | 0,605 | 0,031 |
 
-**Por que LogReg e não GradientBoosting?**
-- GradientBoosting tem AUC +0,006 — diferença estatisticamente irrelevante no CV
-- LogReg vence em **F1** (critério primário) e **Recall** — fundamental para capturar churners
-- LogReg é **~2× mais rápido** em inferência (0,009 vs 0,016 ms/amostra) e ~4× mais rápido que RandomForest
+**Por que LogReg e não GradientBoosting ou MLP?**
+- LogReg vence em **F1** (critério primário), **AUC-ROC** e **PR-AUC** no CV de 5 folds
+- GradientBoosting tem F1 inferior; MLP tem latência 3,6× maior que LogReg
+- LogReg é **~8× mais rápido** que RandomForest e ExtraTrees em batch
 - Coeficientes diretamente interpretáveis para o time de retenção
 - Seleção por AUC sem critério de negócio levou ao fracasso da v1 (GradientBoosting, Precision 0,44)
 
-### Resultado no Teste (threshold = 0,672)
+### Resultado no Teste (threshold = 0,5506)
 
 | Indicador | Baseline | v1 GradBoost | **v2 Campeão** | Δ vs baseline |
 |---|---|---|---|---|
-| Precision (Churn) | 0,511 | 0,444 | **0,616** | +10,5 pp |
-| Recall (Churn) | 0,781 | **0,928** | 0,575 | −20,6 pp |
-| AUC-ROC | 0,849 | 0,855 | 0,839 | −1,0 pp |
-| Clientes acionados/ciclo | 573 | 784 | **349** | **−39%** |
-| Falsos positivos/ciclo | 280 | 437 | **134** | **−52%** |
-| Acertos (TP) | 293 | 347 | 215 | −78 |
+| Precision (Churn) | 0,511 | 0,444 | **0,557** | +4,6 pp |
+| Recall (Churn) | **0,781** | 0,928 | 0,679 | −10,2 pp |
+| AUC-ROC | **0,849** | 0,855 | 0,838 | −1,1 pp |
+| Clientes acionados/ciclo | 573 | 784 | **456** | **−20%** |
+| Falsos positivos/ciclo | 280 | 437 | **202** | **−28%** |
+| Acertos (TP) | 293 | 347 | 254 | −39 |
 
 > **Trade-off explícito:** a v2 troca capturar 78 churners a mais (baseline) por poupar 146 acionamentos desnecessários por ciclo. Justifica-se quando o custo unitário de uma ação de retenção (desconto, ligação, brinde) é alto em relação ao valor do cliente que escapa. Se o custo por ação for baixo, o **baseline ainda é competitivo**.
 
@@ -174,12 +175,12 @@ O artefato é um dict serializado com `joblib` contendo:
 | Chave | Conteúdo |
 |---|---|
 | `pipeline` | `ImbPipeline` completo (impute → SMOTE-NC → encode → LogReg) |
-| `threshold` | 0,672 (calibrado via curva PR, piso Precision ≥ 0,65) |
+| `threshold` | 0,5506 (calibrado via curva PR, maximiza Precision com Recall ≥ 0,70) |
 | `feature_cols` | Lista das 20 colunas de entrada |
 | `num_features` / `cat_features` | Schema de features numéricas e categóricas |
 | `metrics_test` | AUC, PR-AUC, Precision, Recall, F1 no teste |
 | `best_params` | Hiperparâmetros do RandomizedSearchCV |
-| `inference_latency_ms_per_sample` | 0,009 ms/amostra (batch) |
+| `inference_latency_ms_per_sample` | 0,016 ms/amostra (batch) |
 | `random_state` | 42 |
 
 ---
@@ -307,9 +308,8 @@ http://localhost:8000
 |---|---|---|
 | `GET` | `/health` | Status, versão do modelo, threshold e uptime |
 | `POST` | `/predict` | Predição individual com explicabilidade |
-| `POST` | `/predict/batch` | Predição em lote (array de perfis) |
 | `GET` | `/` | Interface web interativa |
-| `GET` | `/docs` | Documentação Swagger (OpenAPI) |
+| `GET` | `/docs` | Documentação Swagger interativa (OpenAPI) |
 
 ---
 
@@ -323,7 +323,7 @@ curl http://localhost:8000/health
 {
   "status": "ok",
   "model_version": "d5e6b522",
-  "threshold": 0.672,
+  "threshold": 0.5506,
   "feature_contract_hash": "a1b2c3d4",
   "uptime_s": 42.1
 }
@@ -364,7 +364,7 @@ curl -X POST http://localhost:8000/predict \
   "customer_id": null,
   "churn_probability": 0.9582,
   "churn_prediction": true,
-  "threshold": 0.672,
+  "threshold": 0.5506,
   "model_version": "d5e6b522",
   "decision_reason": "Alta probabilidade de churn (95.8%). Principal fator: Sem dependentes.",
   "top_contributors": [
@@ -417,21 +417,6 @@ curl -X POST http://localhost:8000/predict \
 
 ---
 
-### POST /predict/batch
-
-```bash
-curl -X POST http://localhost:8000/predict/batch \
-  -H 'Content-Type: application/json' \
-  -d '[
-    {"Tenure Months": 2, "Monthly Charges": 99.65, "Total Charges": 199.30, ...},
-    {"Tenure Months": 48, "Monthly Charges": 45.00, "Total Charges": 2160.00, ...}
-  ]'
-```
-
-Retorna um array de objetos `PredictionResponse` na mesma ordem dos inputs.
-
----
-
 ### Enums e Restrições de Input
 
 | Campo | Valores aceitos |
@@ -440,7 +425,7 @@ Retorna um array de objetos `PredictionResponse` na mesma ordem dos inputs.
 | `Partner` | `"Yes"`, `"No"` |
 | `Dependents` | `"Yes"`, `"No"` |
 | `Multiple Lines` | `"Yes"`, `"No"` |
-| `Internet Service` | `"DSL"`, `"Fiber optic"`, `"No"` |
+| `Internet Service` | `"DSL"`, `"Fiber optic"`, `"Cable"`, `"No"` |
 | `Online Security` | `"Yes"`, `"No"` |
 | `Online Backup` | `"Yes"`, `"No"` |
 | `Device Protection` | `"Yes"`, `"No"` |
