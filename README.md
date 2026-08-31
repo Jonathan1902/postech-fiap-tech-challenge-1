@@ -2,7 +2,7 @@
 
 **Autor:** Jonathan Costa — FIAP Pós-Graduação em Machine Learning  
 **Data:** Agosto/2026  
-**Modelo campeão:** `LogisticRegression + SMOTE-NC` · AUC-ROC 0,84 · Recall 0,68 · threshold 0,5506
+**Modelo em produção:** `LogisticRegression (Baseline v2)` · AUC-ROC 0,849 · Recall 0,783 · threshold 0,50
 
 ---
 
@@ -36,9 +36,10 @@ A Telco é uma operadora de telecomunicações enfrentando aceleração na taxa 
 │  · Identificação de leakage        · Tuning RandomizedSearchCV              │
 │  · Decisões de feature eng.        · Calibração de threshold (PR curve)     │
 │                                    · Benchmark de latência                  │
+│                                    · Seleção via SELECTED_MODEL             │
 └──────────────────────────────────────┬──────────────────────────────────────┘
                                        │  artefato salvo em
-                                       ▼  models/champion_v2_logreg.joblib
+                                       ▼  models/selected_v2_*.joblib
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  PIPELINE DE PREDIÇÃO  (src/churn_predictor/)                               │
 │                                                                             │
@@ -90,12 +91,13 @@ postech-fiap-tech-challenge-1/
 │   └── api_contract.md       Contratos de request/response da API
 │
 ├── models/
-│   ├── champion_v2_logreg.joblib      ← MODELO EM PRODUÇÃO
+│   ├── selected_v2_baseline.joblib        ← MODELO EM PRODUÇÃO
+│   ├── champion_v2_logreg.joblib          Campeão tunado (referência)
 │   └── baseline_logistic_regression.joblib
 │
 ├── notebooks/
 │   ├── 01_eda_telco_churn.ipynb       Análise exploratória de dados
-│   └── 02_modeling_telco_churn.ipynb  Experimentos, tuning e seleção do campeão
+│   └── 02_modeling_telco_churn.ipynb  Experimentos, tuning e seleção do modelo final
 │
 ├── scripts/
 │   ├── build_datasets.py     Executa pipeline raw → trusted → refined
@@ -125,13 +127,13 @@ postech-fiap-tech-challenge-1/
 | Notebook | Conteúdo |
 |---|---|
 | `01_eda_telco_churn.ipynb` | Análise exploratória: distribuições, correlações (Cramér's V, Pearson), identificação de leakage, decisões de feature engineering, análise de desbalanceamento |
-| `02_modeling_telco_churn.ipynb` | Baseline LogReg · comparação de 6 candidatos (incluindo MLPClassifier) com pipeline equivalente (SMOTE-NC + CV) · tuning `RandomizedSearchCV` (com `smote__k_neighbors`) · diagnóstico e calibração de threshold pela curva PR · benchmark de latência · seleção do campeão |
+| `02_modeling_telco_churn.ipynb` | Baseline LogReg · comparação de 6 candidatos (incluindo MLPClassifier) com pipeline equivalente (SMOTE-NC + CV) · tuning `RandomizedSearchCV` (com `smote__k_neighbors`) · diagnóstico e calibração de threshold pela curva PR · benchmark de latência · seleção do modelo final via `SELECTED_MODEL` |
 
 Para executar os notebooks, certifique-se de que os datasets refined existem (`make data`) e abra com Jupyter ou VS Code.
 
 ---
 
-## Decisão do Modelo Campeão
+## Decisão do Modelo Final
 
 ### Comparação dos Candidatos (Cross-Validation 5-fold, SMOTE-NC)
 
@@ -144,30 +146,36 @@ Para executar os notebooks, certifique-se de que os datasets refined existem (`m
 | ExtraTrees | 0,835 | 0,611 | 0,608 | 0,633 | 0,584 | 0,123 |
 | HistGradBoost | 0,843 | 0,646 | 0,606 | 0,606 | 0,605 | 0,031 |
 
-**Por que LogReg e não GradientBoosting ou MLP?**
-- LogReg vence em **F1** (critério primário), **AUC-ROC** e **PR-AUC** no CV de 5 folds
-- GradientBoosting tem F1 inferior; MLP tem latência 3,6× maior que LogReg
-- LogReg é **~8× mais rápido** que RandomForest e ExtraTrees em batch
-- Coeficientes diretamente interpretáveis para o time de retenção
-- Seleção por AUC sem critério de negócio levou ao fracasso da v1 (GradientBoosting, Precision 0,44)
+### Baseline v2 vs. Campeão v2 no Teste
 
-### Resultado no Teste (threshold = 0,5506)
+| Métrica | Baseline v2 (thr=0,50) | Campeão v2 (thr=0,5506) | Δ |
+|---|---|---|---|
+| AUC-ROC | **0,8487** | 0,8383 | −0,0104 |
+| **Recall** | **0,7834** | 0,6791 | **−0,1043** |
+| F1 | **0,6188** | 0,6120 | −0,0068 |
+| Precision | 0,5113 | **0,5570** | +0,0457 |
+| PR-AUC | 0,6447 | **0,6503** | +0,0056 |
 
-| Indicador | Baseline | v1 GradBoost | **v2 Campeão** | Δ vs baseline |
-|---|---|---|---|---|
-| Precision (Churn) | 0,511 | 0,444 | **0,557** | +4,6 pp |
-| Recall (Churn) | **0,781** | 0,928 | 0,679 | −10,2 pp |
-| AUC-ROC | **0,849** | 0,855 | 0,838 | −1,1 pp |
-| Clientes acionados/ciclo | 573 | 784 | **456** | **−20%** |
-| Falsos positivos/ciclo | 280 | 437 | **202** | **−28%** |
-| Acertos (TP) | 293 | 347 | 254 | −39 |
+**Modelo escolhido: Baseline v2.** O campeão tunado ganha apenas em Precision (+4,6 pp) e PR-AUC marginalmente (+0,6 pp), mas perde **10 pp de Recall** — a métrica mais crítica para churn. O custo de não identificar um churner (FN) é maior que o custo de acionar um cliente que não ia cancelar (FP). O ajuste de threshold do campeão simplesmente trocou recall por precisão de forma desvantajosa para o problema de negócio.
 
-> **Trade-off explícito:** a v2 troca capturar 78 churners a mais (baseline) por poupar 146 acionamentos desnecessários por ciclo. Justifica-se quando o custo unitário de uma ação de retenção (desconto, ligação, brinde) é alto em relação ao valor do cliente que escapa. Se o custo por ação for baixo, o **baseline ainda é competitivo**.
+### Seleção do modelo final via parâmetro
+
+O notebook `02_modeling_telco_churn.ipynb` expõe um parâmetro na célula de setup para alternar o modelo persistido sem alterar o código:
+
+```python
+# 'champion' → usa o modelo tunado neste notebook
+# 'baseline' → usa o baseline carregado de ../models/baseline_logistic_regression.joblib
+SELECTED_MODEL = 'baseline'
+```
+
+O artefato gerado é nomeado automaticamente:
+- `SELECTED_MODEL = 'baseline'` → `models/selected_v2_baseline.joblib`
+- `SELECTED_MODEL = 'champion'` → `models/selected_v2_champion_logreg.joblib`
 
 ### Onde está o modelo final
 
 ```
-models/champion_v2_logreg.joblib
+models/selected_v2_baseline.joblib
 ```
 
 O artefato é um dict serializado com `joblib` contendo:
@@ -175,11 +183,12 @@ O artefato é um dict serializado com `joblib` contendo:
 | Chave | Conteúdo |
 |---|---|
 | `pipeline` | `ImbPipeline` completo (impute → SMOTE-NC → encode → LogReg) |
-| `threshold` | 0,5506 (calibrado via curva PR, maximiza Precision com Recall ≥ 0,70) |
-| `feature_cols` | Lista das 20 colunas de entrada |
+| `threshold` | 0,50 |
+| `selected_model` | `"baseline"` |
+| `feature_cols` | Lista das colunas de entrada |
 | `num_features` / `cat_features` | Schema de features numéricas e categóricas |
 | `metrics_test` | AUC, PR-AUC, Precision, Recall, F1 no teste |
-| `best_params` | Hiperparâmetros do RandomizedSearchCV |
+| `best_params` | `{}` (baseline não passa por tuning) |
 | `inference_latency_ms_per_sample` | 0,016 ms/amostra (batch) |
 | `random_state` | 42 |
 
@@ -196,14 +205,16 @@ O artefato é um dict serializado com `joblib` contendo:
 
 ```bash
 # Com make
-make setup install-dev
+make setup install
 
 # Sem make
 python -m venv .venv
-.venv/bin/pip install --upgrade pip
-.venv/bin/pip install -r requirements-dev.txt
+.venv/bin/pip install --upgrade pip setuptools wheel
+.venv/bin/pip install -r requirements.txt
 .venv/bin/pip install -e .
 ```
+
+> **Nota:** o `make setup` atualiza `pip`, `setuptools` e `wheel` juntos — necessário para que o build backend `setuptools.build_meta` (declarado em `pyproject.toml`) funcione corretamente em ambientes com Python 3.13+.
 
 ### 2. Configurar variáveis de ambiente (opcional)
 
@@ -216,13 +227,13 @@ Variáveis disponíveis:
 
 | Variável | Padrão | Descrição |
 |---|---|---|
-| `MODEL_PATH` | `models/champion_v2_logreg.joblib` | Caminho para o artefato do modelo |
+| `MODEL_PATH` | `models/selected_v2_baseline.joblib` | Caminho para o artefato do modelo |
 | `LOG_LEVEL` | `INFO` | Nível de log (`DEBUG`, `INFO`, `WARNING`) |
 | `RAW_DATA_PATH` | `data/raw/telco_customer_churn.xlsx` | Dados brutos de entrada |
 | `TRUSTED_DATA_PATH` | `data/trusted/telco_churn_trusted.csv` | Saída da etapa trusted |
 | `REFINED_DATA_PATH` | `data/refined/telco_churn_refined.csv` | Saída da etapa refined |
 
-> O threshold **não é configurável por variável de ambiente** — é carregado diretamente do artefato `champion_v2_logreg.joblib` para garantir rastreabilidade.
+> O threshold **não é configurável por variável de ambiente** — é carregado diretamente do artefato para garantir rastreabilidade.
 
 ### 3. Construir os datasets
 
@@ -254,9 +265,6 @@ make test-cov      # pytest com cobertura (exige ≥ 85%)
 # Com make (desenvolvimento, com hot-reload)
 make run
 
-# Com make (produção, 2 workers)
-make run-prod
-
 # Sem make
 .venv/bin/python -m uvicorn churn_predictor.api.app:app \
   --host 0.0.0.0 --port 8000 --reload --app-dir src
@@ -268,9 +276,6 @@ Documentação interativa: **http://localhost:8000/docs**
 ### 6. Gerar payloads de teste
 
 ```bash
-# Com make (5 exemplos)
-make sample
-
 # Sem make (20 exemplos, seed fixo)
 .venv/bin/python scripts/generate_test_cases.py --n 20 --seed 42
 ```
@@ -279,17 +284,14 @@ make sample
 
 | Comando | O que faz |
 |---|---|
-| `make setup` | Cria `.venv` e atualiza pip |
-| `make install` | Instala dependências de produção |
-| `make install-dev` | Instala dependências de desenvolvimento (inclui produção) |
+| `make setup` | Cria `.venv` e atualiza pip, setuptools e wheel |
+| `make install` | Instala dependências de produção e o pacote em modo editable |
 | `make data` | Executa o pipeline raw → trusted → refined |
 | `make lint` | Verifica estilo com ruff |
 | `make format` | Corrige estilo automaticamente com ruff |
 | `make test` | Roda pytest sem relatório de cobertura |
 | `make test-cov` | Roda pytest com cobertura (falha se < 85%) |
 | `make run` | Sobe API com hot-reload (desenvolvimento) |
-| `make run-prod` | Sobe API com 2 workers (produção local) |
-| `make sample` | Gera 5 payloads de teste no terminal |
 | `make clean` | Remove `__pycache__`, `.pytest_cache`, `.coverage` |
 
 ---
@@ -323,7 +325,7 @@ curl http://localhost:8000/health
 {
   "status": "ok",
   "model_version": "d5e6b522",
-  "threshold": 0.5506,
+  "threshold": 0.5,
   "feature_contract_hash": "a1b2c3d4",
   "uptime_s": 42.1
 }
@@ -364,7 +366,7 @@ curl -X POST http://localhost:8000/predict \
   "customer_id": null,
   "churn_probability": 0.9582,
   "churn_prediction": true,
-  "threshold": 0.5506,
+  "threshold": 0.5,
   "model_version": "d5e6b522",
   "decision_reason": "Alta probabilidade de churn (95.8%). Principal fator: Sem dependentes.",
   "top_contributors": [
@@ -409,7 +411,7 @@ curl -X POST http://localhost:8000/predict \
 | `churn_probability` | float | Probabilidade de churn (0–1) |
 | `churn_prediction` | bool | `true` se probabilidade ≥ threshold |
 | `threshold` | float | Limiar de decisão (do artefato) |
-| `model_version` | string | Hash SHA-256 dos primeiros 8 chars do modelo |
+| `model_version` | string | Hash SHA-256 (primeiros 8 chars) do artefato carregado |
 | `decision_reason` | string | Resumo textual da decisão com o fator principal |
 | `top_contributors[].feature_label` | string | Nome legível do fator em português |
 | `top_contributors[].contribution` | float | Peso (coef × valor escalado); positivo = aumenta risco |
@@ -448,24 +450,6 @@ curl -X POST http://localhost:8000/predict \
 
 ---
 
-## Observabilidade
-
-Cada requisição emite dois eventos JSON no stdout (structlog):
-
-```json
-{"event": "prediction", "input_hash": "f17d81bcd2ec", "latency": 0.034,
- "probability": 0.958, "label": true, "top_contributor": "Sem dependentes",
- "model_version": "d5e6b522", "route": "/predict", "request_id": "...", "level": "info"}
-
-{"event": "request", "route": "/predict", "status": 200,
- "latency_ms": 36.4, "request_id": "...", "level": "info"}
-```
-
-- `input_hash`: SHA-256 do payload (12 chars) — rastreabilidade sem expor PII
-- `request_id`: UUID por requisição — correlação entre os dois eventos
-
----
-
 ## Possíveis Vieses e Riscos
 
 ### Vieses identificados
@@ -473,10 +457,10 @@ Cada requisição emite dois eventos JSON no stdout (structlog):
 | Viés | Descrição | Mitigação atual |
 |---|---|---|
 | **Viés de seleção** | Dataset Kaggle/IBM é sintético/histórico — não reflete comportamento atual de uma operadora real | Retreino com dados reais assim que disponíveis |
-| **Viés demográfico** | `Senior Citizen` é uma das features mais influentes; o modelo pode sistematicamente sub-ponderar clientes sênior como não-churners | Auditoria de fairness por subgrupo antes de produção real |
-| **Viés de sobrevivência** | Dataset contém apenas clientes ativos ou que já cancelaram — não inclui clientes que nunca chegaram a converter | Ampliar escopo do dataset |
-| **Estabilidade de coeficientes** | `Tenure Months` e `Total Charges` têm correlação 0,826; coeficientes isolados são instáveis | `Total Charges` removido do pipeline de produção |
-| **SMOTE sintético** | Amostras sintéticas geradas em regiões densas podem não representar comportamento real de churners | Monitorar distribuição dos scores em produção |
+| **Viés demográfico** | `Senior Citizen` é uma das features mais influentes; o modelo pode sistematicamente sub-ponderar clientes sênior | Auditoria de fairness por subgrupo antes de produção real |
+| **Viés de sobrevivência** | Dataset contém apenas clientes ativos ou que já cancelaram | Ampliar escopo do dataset |
+| **Estabilidade de coeficientes** | `Tenure Months` e `Total Charges` têm correlação 0,826 | `Total Charges` removido do pipeline de produção |
+| **SMOTE sintético** | Amostras sintéticas podem não representar comportamento real de churners | Monitorar distribuição dos scores em produção |
 
 ### Riscos atuais do projeto
 
@@ -486,33 +470,20 @@ Cada requisição emite dois eventos JSON no stdout (structlog):
 | Threshold fixo no artefato | Threshold ótimo muda com o perfil da base | Média | Recalibrar na curva PR a cada retreino |
 | Sem calibração de probabilidades | `predict_proba` pode ser sobre-confiante após SMOTE | Média | Aplicar `CalibratedClassifierCV(method='isotonic')` |
 | Sem autenticação na API | Qualquer cliente pode consultar o modelo | Alta (produção) | Adicionar API key ou OAuth antes de deploy externo |
-| Sem versionamento de modelo na API | Impossível rollback rápido | Média | Adicionar rota `/models` com artefatos disponíveis |
 | Ausência de testes de drift | Degradação silenciosa | Alta | Implementar PSI / KS test nos logs de produção |
 
 ---
 
 ## Próximos Passos e Evoluções
 
-### Curto prazo (próximo ciclo)
-
-- [ ] **Análise de custo de FP vs FN com stakeholder** — definir empiricamente o `PRECISION_FLOOR` (atualmente 0,65 a priori) baseado no custo real de uma ação de retenção vs. receita perdida por churn
+- [ ] **Análise de custo de FP vs FN com stakeholder** — definir empiricamente o trade-off Precision/Recall baseado no custo real de uma ação de retenção vs. receita perdida por churn
 - [ ] **Calibração de probabilidades** — `CalibratedClassifierCV(method='isotonic')` pós-SMOTE para scores mais confiáveis
 - [ ] **Autenticação na API** — API key mínima antes de qualquer exposição externa
 - [ ] **Auditoria de fairness** — métricas de Precision/Recall por subgrupo (`Senior Citizen`, faixa de `Monthly Charges`)
-
-### Médio prazo
-
-- [ ] **Dados reais** — substituir dataset Kaggle por dados da operadora com histórico atualizado
 - [ ] **Monitoramento de drift** — PSI (Population Stability Index) e KS test nos inputs e scores
-- [ ] **BorderlineSMOTE / ADASYN** — testar alternativas ao SMOTE-NC para reduzir amostras sintéticas em regiões densas
 - [ ] **Containerização** — Dockerfile + docker-compose para deploy reprodutível
 - [ ] **CI/CD** — pipeline de retreino automatizado com validação de métricas antes de promote
-
-### Longo prazo
-
 - [ ] **Features comportamentais** — histórico de chamadas ao suporte, variação mensal de uso, eventos de billing
-- [ ] **Modelo de uplift** — estimar não só _quem_ vai cancelar, mas _quem_ responde positivamente à intervenção
-- [ ] **A/B test de intervenção** — medir impacto real da predição na taxa de retenção
 
 ---
 
@@ -526,14 +497,3 @@ Cada requisição emite dois eventos JSON no stdout (structlog):
 | `docs/api_contract.md` | Contratos detalhados de request/response |
 
 ---
-
-## Troubleshooting
-
-| Erro | Causa provável | Solução |
-|---|---|---|
-| `make: command not found` | `make` não instalado | Use os comandos equivalentes listados em cada etapa acima |
-| `ModuleNotFoundError: churn_predictor` | Pacote não instalado em modo editable | `make install-dev` ou `.venv/bin/pip install -e .` |
-| `FileNotFoundError: champion_v2_logreg.joblib` | Modelo ausente | Verifique se o arquivo existe em `models/` |
-| `FileNotFoundError: telco_customer_churn.xlsx` | Dataset bruto ausente | Verifique se o arquivo existe em `data/raw/` |
-| `422 Unprocessable Entity` | Valor de enum inválido ou constraint violada | Consulte a tabela de enums acima |
-| Datasets não existem (`/trusted`, `/refined`) | Pipeline de dados não executado | `make data` |
