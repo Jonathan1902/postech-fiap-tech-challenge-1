@@ -4,7 +4,7 @@
 **Autor:** Jonathan Costa — FIAP Pós-Graduação em Machine Learning  
 **Data:** Agosto/2026  
 **Arquivo do modelo:** `models/baseline_logistic_regression.joblib`
-**Revisão aplicada (v2):** ver [eda_and_model_revision.md](./eda_and_model_revision.md) — pipeline agora usa 17 features (removidos `Gender` e `Phone Service` por Cramér's V < 0,02), colapso de `"No internet service"`/`"No phone service"` → `"No"` (elimina 7 colunas OHE colineares) e imputação `Total Charges = 0` para clientes com `Tenure = 0`. Métricas mantiveram-se equivalentes (AUC 0,8487 · Recall 0,7834 · F1 0,6188), mas o modelo é mais parcimonioso e semanticamente correto.  
+**Revisão aplicada (v2):** ver [eda_and_model_revision.md](./eda_and_model_revision.md) — pipeline agora usa 17 features (removidos `Gender` e `Phone Service` por Cramér's V < 0,02), colapso de `"No internet service"`/`"No phone service"` → `"No"` (elimina 7 colunas OHE colineares) e imputação `Total Charges = 0` para clientes com `Tenure = 0`. Métricas mantiveram-se equivalentes (AUC 0,8530 · Recall 0,7807 · F1 0,6188), mas o modelo é mais parcimonioso e semanticamente correto.  
 
 ---
 
@@ -103,7 +103,7 @@ Isso equivale a dar ~2,77x mais peso aos exemplos de churn no cálculo da funç�
 
 | Métrica | Valor | Critério de Aprovação | Status |
 |---|---|---|---|
-| **AUC-ROC** | **0,8488** | ≥ 0,80 | ✅ Aprovado |
+| **AUC-ROC** | **0,8530** | ≥ 0,80 | ✅ Aprovado |
 | **Recall (Churn)** | **0,7807** | ≥ 0,70 | ✅ Aprovado |
 | **F1-Score (Churn)** | **0,6173** | — | Referência |
 
@@ -177,7 +177,7 @@ import joblib
 
 pipeline = joblib.load('models/baseline_logistic_regression.joblib')
 
-# Uso em produção (X deve conter as mesmas 19 colunas usadas no treino)
+# Uso em produção (X deve conter as mesmas 18 colunas usadas no treino)
 y_pred = pipeline.predict(X)
 y_proba = pipeline.predict_proba(X)[:, 1]  # probabilidade de churn
 ```
@@ -196,7 +196,7 @@ y_proba = pipeline.predict_proba(X)[:, 1]  # probabilidade de churn
 
 O modelo atende aos critérios definidos no ML Canvas para produção:
 
-- ✅ AUC-ROC ≥ 0,80 → **0,8488**
+- ✅ AUC-ROC ≥ 0,80 → **0,8530**
 - ✅ Recall (churn) ≥ 0,70 → **0,7807**
 
 **Alertas de degradação:** caso o AUC-ROC em produção caia mais de 5 pontos percentuais (< 0,80), deve ser acionado retreino com dados atualizados.

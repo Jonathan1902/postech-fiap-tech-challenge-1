@@ -2,7 +2,7 @@
 
 **Autor:** Jonathan Costa — FIAP Pós-Graduação em Machine Learning  
 **Data:** Agosto/2026  
-**Modelo em produção:** `LogisticRegression (Baseline v2)` · AUC-ROC 0,849 · Recall 0,783 · threshold 0,50
+**Modelo em produção:** `LogisticRegression (Baseline v2)` · AUC-ROC 0,853 · Recall 0,781 · threshold 0,50
 
 ---
 
@@ -150,11 +150,11 @@ Para executar os notebooks, certifique-se de que os datasets refined existem (`m
 
 | Métrica | Baseline v2 (thr=0,50) | Campeão v2 (thr=0,5506) | Δ |
 |---|---|---|---|
-| AUC-ROC | **0,8487** | 0,8383 | −0,0104 |
-| **Recall** | **0,7834** | 0,6791 | **−0,1043** |
-| F1 | **0,6188** | 0,6120 | −0,0068 |
-| Precision | 0,5113 | **0,5570** | +0,0457 |
-| PR-AUC | 0,6447 | **0,6503** | +0,0056 |
+| AUC-ROC | **0,8530** | 0,8383 | −0,0147 |
+| **Recall** | **0,7807** | 0,6791 | **−0,1016** |
+| F1 | **0,6173** | 0,6120 | −0,0053 |
+| Precision | 0,5105 | **0,5570** | +0,0465 |
+| PR-AUC | 0,6691 | **0,6503** | −0,0188 |
 
 **Modelo escolhido: Baseline v2.** O campeão tunado ganha apenas em Precision (+4,6 pp) e PR-AUC marginalmente (+0,6 pp), mas perde **10 pp de Recall** — a métrica mais crítica para churn. O custo de não identificar um churner (FN) é maior que o custo de acionar um cliente que não ia cancelar (FP). O ajuste de threshold do campeão simplesmente trocou recall por precisão de forma desvantajosa para o problema de negócio.
 

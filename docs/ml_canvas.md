@@ -46,13 +46,13 @@ A Telco é uma operadora de telecomunicações que está perdendo múltiplos cli
 - Latência aceitável: até 24h para batch; < 500ms para API
 
 ### BUILDING MODELS
-- 1 modelo campeão escolhido entre: Logistic Regression, Random Forest, MLPClassifier
+- 1 modelo campeão escolhido entre: Logistic Regression, GradientBoosting, HistGradBoost, RandomForest, ExtraTrees, MLPClassifier
 - Validação: cross-validation estratificada (5 folds)
 - Atualização: retreino trimestral ou quando AUC cair mais do que 5% em monitoramento
 - Recurso computacional: ambiente local
 
 ### FEATURES
-- Numéricas: tenure, MonthlyCharges, TotalCharges → StandardScaler
+- Numéricas: tenure, MonthlyCharges → StandardScaler (`TotalCharges` removido por colinearidade com tenure, ρ = 0,83)
 - Categóricas: Contract, PaymentMethod, InternetService, serviços → OneHotEncoder
 - Pipeline de pré-processamento com Scikit-Learn ColumnTransformer
 

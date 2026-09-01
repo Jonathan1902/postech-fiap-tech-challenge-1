@@ -125,13 +125,13 @@ Melhores parâmetros encontrados:
 
 | Métrica | Baseline v2 (LogReg, thr=0,50) | v1 champion (GradientBoosting, thr=0,159) | **v2 champion (LogReg, thr=0,5506)** |
 |---|---|---|---|
-| AUC-ROC | **0,8487** | 0,8546 | 0,8383 |
-| PR-AUC | 0,6447 | — | **0,6503** |
-| Precision (Churn) | 0,5113 | 0,4443 | **0,5570** |
-| Recall (Churn) | **0,7834** | 0,9278 | 0,6791 |
-| F1 (Churn) | **0,6188** | 0,6009 | 0,6120 |
-| **Clientes acionados** | 573 | 784 | **456** |
-| **Acionamentos corretos (TP)** | 293 (51,1%) | 347 (44,2%) | **254 (55,7%)** |
+| AUC-ROC | **0,8530** | 0,8546 | 0,8383 |
+| PR-AUC | 0,6691 | — | **0,6503** |
+| Precision (Churn) | 0,5105 | 0,4443 | **0,5570** |
+| Recall (Churn) | **0,7807** | 0,9278 | 0,6791 |
+| F1 (Churn) | **0,6173** | 0,6009 | 0,6120 |
+| **Clientes acionados** | 572 | 784 | **456** |
+| **Acionamentos corretos (TP)** | 292 (51,0%) | 347 (44,2%) | **254 (55,7%)** |
 | **Falsos positivos** | 280 | 437 | **202** |
 
 ### Nota sobre AUC-ROC do campeão versus baseline
@@ -157,12 +157,12 @@ O campeão v2 **supera o baseline em PR-AUC** (0,6503 vs 0,6447) — a métrica 
 
 | Indicador | Baseline v2 | v1 champion | v2 champion | Δ v2 vs baseline |
 |---|---|---|---|---|
-| Clientes acionados por ciclo | 573 | 784 | **456** | **−20%** |
+| Clientes acionados por ciclo | 572 | 784 | **456** | **−20%** |
 | Falsos positivos por ciclo | 280 | 437 | **202** | **−28%** |
-| Churners capturados | 293 | 347 | 254 | −13% |
-| Precisão do acionamento | 51,1% | 44,2% | **55,7%** | **+4,6 pp** |
+| Churners capturados | 292 | 347 | 254 | −13% |
+| Precisão do acionamento | 51,0% | 44,2% | **55,7%** | **+4,7 pp** |
 
-> **Trade-off explícito:** o critério do v2 foi revisto para priorizar identificar churners (Recall), aceitando mais FPs que a configuração anterior (thr=0,678). Em relação ao baseline, o v2 poupa 117 acionamentos desnecessários por ciclo (−28% de FPs) ao custo de não detectar 39 churners a mais (−13% de TP). Este trade-off é adequado quando o custo unitário de retenção for moderado-alto — caso contrário, o baseline segue competitivo em Recall.
+> **Trade-off explícito:** o critério do v2 foi revisto para priorizar identificar churners (Recall), aceitando mais FPs que a configuração anterior (thr=0,678). Em relação ao baseline, o v2 poupa 116 acionamentos desnecessários por ciclo (−28% de FPs) ao custo de não detectar 38 churners a mais (−13% de TP). Este trade-off é adequado quando o custo unitário de retenção for moderado-alto — caso contrário, o baseline segue competitivo em Recall.
 
 ### Matriz de Confusão (v2 champion, thr=0,5506)
 
