@@ -56,7 +56,7 @@ _LABEL_MAP: dict[str, str] = {
 
 
 class Explainer:
-    """Computes per-feature contributions for the champion pipeline.
+    """Computes per-feature contributions for the loaded production pipeline.
 
     Supports two strategies depending on the classifier type:
     - Linear models (coef_ available): contribution = coef × encoded_value

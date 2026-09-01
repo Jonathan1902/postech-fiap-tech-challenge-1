@@ -5,12 +5,12 @@ Métricas avaliadas no conjunto de **teste** (20% estratificado, `random_state=4
 
 ---
 
-## Experimento 001 — Baseline v1
+## Experimento 001 — Baseline v2
 
 **Data:** Agosto/2026
 **Notebook:** `notebooks/01_eda_telco_churn.ipynb`
 **Modelo:** Logistic Regression (sklearn)
-**Artefato:** `models/baseline_logistic_regression.joblib`
+**Artefato:** `models/selected_v2_baseline.joblib` ✅ **ativo em produção**
 
 ### Configuração
 
@@ -31,13 +31,13 @@ Métricas avaliadas no conjunto de **teste** (20% estratificado, `random_state=4
 
 | Métrica | Valor |
 |---|---|
-| AUC-ROC | 0,8487 |
-| PR-AUC | 0,6447 |
-| Precision (Churn) | 0,5113 |
-| Recall (Churn) | 0,7834 |
-| F1 (Churn) | 0,6188 |
-| Accuracy | 0,7452 |
-| Clientes acionados | 573 |
+| AUC-ROC | 0,8530 |
+| PR-AUC | 0,6691 |
+| Precision (Churn) | 0,5105 |
+| Recall (Churn) | 0,7807 |
+| F1 (Churn) | 0,6173 |
+| Accuracy | 0,7431 |
+| Clientes acionados | 572 |
 | Falsos positivos | 280 |
 
 ### Observações
@@ -84,7 +84,7 @@ Modelo baseline: sem feature engineering, sem balanceamento via SMOTE, threshold
 **Data:** Agosto/2026
 **Notebook:** `notebooks/02_modeling_telco_churn.ipynb` (v2)
 **Modelo:** LogisticRegression com SMOTE-NC
-**Artefato:** `models/champion_v2_logreg.joblib` ✅ **ativo em produção**
+**Artefato:** `models/champion_v2_logreg.joblib`
 
 ### Configuração
 

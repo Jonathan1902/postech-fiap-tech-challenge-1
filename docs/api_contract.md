@@ -12,8 +12,7 @@
 {
   "status": "ok",
   "model_version": "a1b2c3d4",
-  "threshold": 0.6717,
-  "feature_contract_hash": "e5f6a7b8",
+  "threshold": 0.5,
   "uptime_s": 12.3
 }
 ```
@@ -51,12 +50,12 @@
   "customer_id": null,
   "churn_probability": 0.423,
   "churn_prediction": false,
-  "threshold": 0.6717,
+  "threshold": 0.5,
   "model_version": "a1b2c3d4",
   "decision_reason": "Baixa probabilidade de churn (42.3%). Cliente provavelmente retido.",
   "top_contributors": [
-    {"feature": "cat__Contract_Month-to-month", "value": 1.0, "contribution": 0.812},
-    {"feature": "cat__Internet Service_DSL", "value": 1.0, "contribution": -0.531}
+    {"feature": "Contract_Month-to-month", "feature_label": "Tipo de contrato: mensal", "contribution": 0.812, "direction": "positive"},
+    {"feature": "Internet Service_DSL", "feature_label": "Internet: DSL", "contribution": -0.531, "direction": "negative"}
   ]
 }
 ```
@@ -74,7 +73,7 @@
 | Partner | `"Yes"`, `"No"` |
 | Dependents | `"Yes"`, `"No"` |
 | Multiple Lines | `"Yes"`, `"No"` |
-| Internet Service | `"DSL"`, `"Fiber optic"`, `"No"` |
+| Internet Service | `"DSL"`, `"Fiber optic"`, `"Cable"`, `"No"` |
 | Online Security | `"Yes"`, `"No"` |
 | Online Backup | `"Yes"`, `"No"` |
 | Device Protection | `"Yes"`, `"No"` |
@@ -90,18 +89,6 @@
 - `Monthly Charges` > 0
 - `Total Charges` ≥ 0
 - `Total Charges` must be 0 when `Tenure Months` is 0
-
----
-
-## POST /predict/batch
-
-Same payload as `/predict` but as a JSON array. Returns array of `PredictionResponse`.
-
-```bash
-curl -X POST http://localhost:8000/predict/batch \
-  -H 'Content-Type: application/json' \
-  -d '[{...profile1...}, {...profile2...}]'
-```
 
 ---
 
